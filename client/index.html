@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIKNATIS SAVAŞI 🧲</title>
+  <meta name="description" content="Tarayıcıda oynanan 3D çok oyunculu mıknatıs fizik oyunu. Eşyaları çek, fırlat, rakiplerini arenadan düşür!" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧲</text></svg>" />
+</head>
+<body>
+  <div id="game"></div>
+  <div id="tags"></div>
+
+  <!-- ================= ANA MENÜ ================= -->
+  <section id="menu" class="screen">
+    <div class="panel menu-panel">
+      <h1 class="logo"><span class="magnet">🧲</span> MIKNATIS <span class="accent">SAVAŞI</span></h1>
+      <p class="tagline">Eşyaları çek, fırlat, herkesi arenadan aşağı yolla!</p>
+      <label class="field">
+        <span>Oyuncu adın</span>
+        <input id="nameInput" maxlength="16" placeholder="Adını yaz..." autocomplete="off" />
+      </label>
+      <div class="row">
+        <label class="field grow">
+          <span>Bot zorluğu</span>
+          <select id="diffSelect">
+            <option value="kolay">Kolay</option>
+            <option value="orta" selected>Orta</option>
+            <option value="zor">Zor</option>
+          </select>
+        </label>
+        <button id="btnSolo" class="btn big green grow">▶ Tek Oyna</button>
+      </div>
+      <div class="divider"><span>Arkadaşlarınla</span></div>
+      <div class="row">
+        <button id="btnCreate" class="btn big blue grow">🏠 Oda Kur</button>
+      </div>
+      <div class="row">
+        <input id="codeInput" class="code-input" maxlength="6" placeholder="ODA KODU" autocomplete="off" />
+        <button id="btnJoin" class="btn big orange">🚪 Odaya Katıl</button>
+      </div>
+      <p id="loadStatus" class="hint">Fizik motoru yükleniyor...</p>
+    </div>
+    <div class="panel help-panel">
+      <h3>Nasıl oynanır?</h3>
+      <ul class="keys">
+        <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Hareket &nbsp; <kbd>Boşluk</kbd> Zıpla</li>
+        <li><kbd>Sol tık</kbd> (basılı tut) Eşyayı çek</li>
+        <li><kbd>Sağ tık</kbd> Tuttuğunu fırlat</li>
+        <li><kbd>Sağ tık</kbd> (eşya yokken) İtme dalgası</li>
+        <li><kbd>E</kbd> Metale kanca at (turuncu nişangâh)</li>
+        <li><kbd>Sol tık</kbd> (eşya tutarken) Bırak</li>
+        <li><kbd>Tab</kbd> Skor &nbsp; <kbd>M</kbd> Ses &nbsp; <kbd>F3</kbd> Hata ayıklama</li>
+      </ul>
+      <p class="tip">💡 Tuttuğun eşya kalkandır! Ağır eşyalar yavaş uçar ama çok iter. Düşerken metal bir direğe <kbd>E</kbd> ile kanca atarak kurtul!</p>
+    </div>
+  </section>
+
+  <!-- ================= SUNUCUYA BAĞLANMA ================= -->
+  <section id="connecting" class="screen hidden">
+    <div class="panel center-panel">
+      <div class="spinner">🧲</div>
+      <h2 id="connTitle">Sunucuya bağlanılıyor...</h2>
+      <p id="connText" class="hint"></p>
+      <button id="btnConnCancel" class="btn">Vazgeç</button>
+    </div>
+  </section>
+
+  <!-- ================= BEKLEME LOBİSİ ================= -->
+  <section id="lobby" class="screen hidden">
+    <div class="panel lobby-panel">
+      <h2>Oda <span id="lobbyCode" class="code"></span></h2>
+      <label class="field">
+        <span>Davet linki (arkadaşlarına gönder)</span>
+        <div class="row">
+          <input id="inviteLink" readonly />
+          <button id="btnCopy" class="btn blue">📋 Kopyala</button>
+        </div>
+      </label>
+      <h3>Oyuncular <span id="lobbyCount"></span></h3>
+      <ul id="lobbyPlayers" class="player-list"></ul>
+      <div id="hostControls">
+        <div class="row">
+          <label class="field grow">
+            <span>Bot zorluğu</span>
+            <select id="lobbyDiff">
+              <option value="kolay">Kolay</option>
+              <option value="orta">Orta</option>
+              <option value="zor">Zor</option>
+            </select>
+          </label>
+          <label class="field grow">
+            <span>Botlarla tamamla</span>
+            <select id="lobbyFill">
+              <option value="2">2 kişiye</option>
+              <option value="4">4 kişiye</option>
+              <option value="6">6 kişiye</option>
+              <option value="8">8 kişiye</option>
+            </select>
+          </label>
+        </div>
+        <button id="btnStart" class="btn big green full">▶ Başlat</button>
+      </div>
+      <p id="lobbyWait" class="hint hidden">Oda kurucusunun oyunu başlatması bekleniyor...</p>
+      <button id="btnLeave" class="btn">← Odadan Çık</button>
+    </div>
+  </section>
+
+  <!-- ================= OYUN İÇİ ARAYÜZ (HUD) ================= -->
+  <section id="hud" class="hidden">
+    <div id="topBar">
+      <div id="timer" class="pill">2:00</div>
+      <div id="aliveCount" class="pill">👥 8/8</div>
+    </div>
+    <div id="crosshair"><div class="ring"></div><div class="dot"></div><div class="hitx">✕</div></div>
+    <div id="cooldowns">
+      <div id="cdWave" class="cd" title="İtme dalgası (Sağ tık)"><span>💨</span></div>
+      <div id="cdHook" class="cd" title="Kanca (E)"><span>🪝</span></div>
+    </div>
+    <div id="holdInfo" class="hidden"></div>
+    <div id="feed"></div>
+    <div id="bigMsg"></div>
+    <div id="subMsg"></div>
+    <div id="spectate" class="hidden">👀 İZLEYİCİ MODU — <b id="specName"></b> izleniyor <small>(Sol tık: sonraki oyuncu)</small><span id="spRestart"> · <kbd>R</kbd> Hemen tekrar oyna</span></div>
+    <div id="scoreboard" class="panel hidden"></div>
+    <div id="clickToPlay" class="hidden"><div class="panel">🖱️ Oynamak için <b>tıkla</b><br><small>ESC: fareyi serbest bırak</small><br><button id="btnQuit" class="btn">Ana Menüye Dön</button></div></div>
+  </section>
+
+  <!-- ================= TUR SONU ================= -->
+  <section id="end" class="screen hidden">
+    <div class="panel end-panel">
+      <div id="endTrophy">🏆</div>
+      <h2 id="endTitle">KAZANAN</h2>
+      <table id="endTable"></table>
+      <div class="row">
+        <button id="btnAgain" class="btn big green grow">🔁 Tekrar Oyna</button>
+        <button id="btnToLobby" class="btn big blue grow">Lobiye Dön</button>
+        <button id="btnToMenu" class="btn big grow">Ana Menü</button>
+      </div>
+      <p id="endWait" class="hint hidden">Oda kurucusunun yeni turu başlatması bekleniyor...</p>
+    </div>
+  </section>
+
+  <div id="debug" class="hidden"></div>
+  <div id="toast" class="hidden"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

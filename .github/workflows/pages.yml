@@ -1,0 +1,51 @@
+# İstemciyi (client) her main push'unda GitHub Pages'e otomatik yayınlar.
+# Sunucu adresi: depo ayarlarında Settings > Secrets and variables > Actions > Variables
+# bölümüne SERVER_URL adında bir değişken ekle (örn. wss://miknatis-savasi.onrender.com).
+name: GitHub Pages'e yayınla
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Bağımlılıkları kur
+        run: npm ci
+      - name: Simülasyon testi (8 bot bir tur oynar)
+        run: npm run test:sim
+      - name: İstemciyi derle
+        run: npm run build -w client
+        env:
+          VITE_SERVER_URL: ${{ vars.SERVER_URL || 'wss://miknatis-savasi.onrender.com' }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: client/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Yayınla
+        id: deployment
+        uses: actions/deploy-pages@v4

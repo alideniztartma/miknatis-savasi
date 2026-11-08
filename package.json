@@ -1,0 +1,16 @@
+{
+  "name": "miknatis-savasi",
+  "private": true,
+  "version": "1.0.0",
+  "description": "MIKNATIS SAVAŞI - tarayıcıda oynanan 3D çok oyunculu mıknatıs fizik oyunu",
+  "type": "module",
+  "workspaces": ["shared", "client", "server"],
+  "scripts": {
+    "dev:client": "npm run dev -w client",
+    "dev:server": "npm run dev -w server",
+    "build:client": "npm run build -w client",
+    "start:server": "npm run start -w server",
+    "test:sim": "node shared/test/simTest.js"
+  },
+  "engines": { "node": ">=20" }
+}

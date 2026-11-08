@@ -1,0 +1,17 @@
+# Render "Blueprint" dosyası: Render panelinde New > Blueprint ile bu repoyu seçince
+# sunucu otomatik bu ayarlarla kurulur. (Elle kurmak için README'ye bak.)
+services:
+  - type: web
+    name: miknatis-savasi
+    runtime: node
+    plan: free
+    region: frankfurt # Türkiye'ye en yakın bölge -> daha düşük ping
+    buildCommand: npm ci --workspace server
+    startCommand: npm run start -w server
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: MAX_ROOMS
+        value: "3"
